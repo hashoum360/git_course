@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حاسبة مؤشر كتلة الجسم | BMI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #111827;
+      --card: rgba(255, 255, 255, 0.07);
+      --card-border: rgba(255, 255, 255, 0.14);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-2: #818cf8;
+      --input-bg: rgba(15, 23, 42, 0.55);
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --info: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Cairo", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 100% -10%, rgba(129, 140, 248, 0.28), transparent 60%),
+        radial-gradient(800px 500px at -10% 110%, rgba(56, 189, 248, 0.22), transparent 60%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .container { width: 100%; max-width: 480px; }
+    .card {
+      position: relative;
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 30px 28px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -80px; left: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%);
+      pointer-events: none;
+    }
+    .header { text-align: center; margin-bottom: 22px; position: relative; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #bae6fd;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 6px;
+    }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #f1f5f9;
+    }
+    .input-wrap { position: relative; }
+    input {
+      width: 100%;
+      padding: 13px 14px 13px 46px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input::placeholder { color: #64748b; }
+    input:hover { border-color: rgba(255,255,255,0.22); }
+    input:focus {
+      outline: none;
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+      background: rgba(15, 23, 42, 0.75);
+    }
+    .unit {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #071018;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 12px 24px rgba(56, 189, 248, 0.22);
+      transition: transform 0.08s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover { filter: brightness(1.06); box-shadow: 0 14px 28px rgba(56,189,248,0.28); }
+    button:active { transform: translateY(1px) scale(0.998); }
+    button:disabled { opacity: 0.7; cursor: not-allowed; filter: saturate(0.7); }
+
+    .result, .error-box {
+      margin-top: 18px;
+      border-radius: 14px;
+      display: none;
+      animation: fadeUp 0.28s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result {
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(180deg, rgba(15,23,42,0.55), rgba(15,23,42,0.35));
+    }
+    .result-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .result-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .bmi-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.05;
+      margin: 4px 0 0;
+      letter-spacing: 0.5px;
+    }
+    .chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .chip.info { background: rgba(96,165,250,0.16); color: #bfdbfe; border-color: rgba(96,165,250,0.3); }
+    .chip.success { background: rgba(34,197,94,0.16); color: #bbf7d0; border-color: rgba(34,197,94,0.3); }
+    .chip.warn { background: rgba(245,158,11,0.16); color: #fde68a; border-color: rgba(245,158,11,0.3); }
+    .chip.danger { background: rgba(239,68,68,0.16); color: #fecaca; border-color: rgba(239,68,68,0.3); }
+
+    .api-message {
+      margin: 10px 0 0;
+      color: #dbe4ee;
+      font-size: 0.97rem;
+    }
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .scale-wrap { margin-top: 16px; }
+    .pointer-track { position: relative; height: 14px; margin-bottom: -2px; }
+    .pointer {
+      position: absolute;
+      top: 0;
+      width: 0; height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 10px solid #f8fafc;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.45));
+      transition: left 0.45s cubic-bezier(.2,.8,.2,1);
+      left: 0%;
+    }
+    .scale {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 18.5fr 6.5fr 5fr 10fr;
+      background: #334155;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .scale span:nth-child(1) { background: linear-gradient(90deg, #60a5fa, #7dd3fc); }
+    .scale span:nth-child(2) { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .scale span:nth-child(3) { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .scale span:nth-child(4) { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .scale-labels {
+      display: grid;
+      grid-template-columns: 18.5fr 6.5fr 5fr 10fr;
+      gap: 4px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    .error-box {
+      padding: 14px 16px;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.12);
+      color: #fecaca;
+      line-height: 1.7;
+    }
+    .error-box strong { color: #fee2e2; }
+    .footer {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    code {
+      color: #bae6fd;
+      background: rgba(56,189,248,0.08);
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+
+    @media (max-width: 460px) {
+      .card { padding: 22px 18px; border-radius: 18px; }
+      .grid { grid-template-columns: 1fr; gap: 12px; }
+      h1 { font-size: 1.5rem; }
+      .bmi-number { font-size: 2.2rem; }
+      .result-top { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <main class="card">
+      <header class="header">
+        <div class="badge">⚡ BMI Calculator</div>
+        <h1>حاسبة مؤشر كتلة الجسم</h1>
+        <p class="subtitle">واجهة احترافية لحساب BMI عبر الـ API الخاص بك</p>
+      </header>
+
+      <form id="bmiForm" novalidate>
+        <div class="grid">
+          <div class="field">
+            <label for="weight">الوزن</label>
+            <div class="input-wrap">
+              <input type="number" id="weight" name="weight" step="any" min="0" inputmode="decimal" placeholder="مثال: 85" required>
+              <span class="unit">كجم</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="height">الطول</label>
+            <div class="input-wrap">
+              <input type="number" id="height" name="height" step="any" min="0" inputmode="decimal" placeholder="مثال: 1.75" required>
+              <span class="unit">متر</span>
+            </div>
+          </div>
+        </div>
+        <button type="submit" id="submitBtn">احسب الآن</button>
+      </form>
+
+      <section id="result" class="result" aria-live="polite">
+        <div class="result-top">
+          <div>
+            <p class="result-label">مؤشر كتلة الجسم (BMI)</p>
+            <div class="bmi-number" id="bmiValue">--</div>
+          </div>
+          <div id="bmiChip" class="chip info">--</div>
+        </div>
+        <p class="api-message" id="apiMessage"></p>
+        <p class="meta" id="metaInfo"></p>
+
+        <div class="scale-wrap" aria-hidden="true">
+          <div class="pointer-track"><div class="pointer" id="pointer"></div></div>
+          <div class="scale">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="scale-labels">
+            <span>نحافة<br>&lt; 18.5</span>
+            <span>طبيعي<br>18.5–25</span>
+            <span>زيادة<br>25–30</span>
+            <span>سمنة<br>≥ 30</span>
+          </div>
+        </div>
+      </section>
+
+      <div id="errorBox" class="error-box" aria-live="polite"></div>
+
+      <div class="footer">نقطة الاتصال: <code>GET /calculate_bmi</code> على <code>127.0.0.1:8000</code></div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const form = document.getElementById("bmiForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const resultEl = document.getElementById("result");
+    const errorBox = document.getElementById("errorBox");
+    const bmiValueEl = document.getElementById("bmiValue");
+    const bmiChipEl = document.getElementById("bmiChip");
+    const apiMessageEl = document.getElementById("apiMessage");
+    const metaInfoEl = document.getElementById("metaInfo");
+    const pointerEl = document.getElementById("pointer");
+
+    function getCategory(bmi) {
+      if (bmi < 18.5) return { label: "نقص في الوزن", cls: "info" };
+      if (bmi < 25)   return { label: "وزن طبيعي", cls: "success" };
+      if (bmi < 30)   return { label: "زيادة في الوزن", cls: "warn" };
+      return { label: "سمنة", cls: "danger" };
+    }
+
+    function bmiToPercent(bmi) {
+      const min = 10, max = 40;
+      const clamped = Math.min(max, Math.max(min, bmi));
+      return ((clamped - min) / (max - min)) * 100;
+    }
+
+    function showError(html) {
+      resultEl.style.display = "none";
+      errorBox.style.display = "block";
+      errorBox.innerHTML = html;
+    }
+
+    function showResult(bmi, message, weight, height) {
+      errorBox.style.display = "none";
+      const category = getCategory(bmi);
+
+      bmiValueEl.textContent = Number(bmi).toFixed(2);
+      bmiChipEl.textContent = category.label;
+      bmiChipEl.className = "chip " + category.cls;
+      apiMessageEl.textContent = message || "تم حساب مؤشر كتلة الجسم بنجاح.";
+      metaInfoEl.textContent = `الوزن: ${weight} كجم • الطول: ${height} م`;
+      pointerEl.style.left = bmiToPercent(bmi) + "%";
+
+      resultEl.style.display = "block";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const weight = document.getElementById("weight").value.trim();
+      const height = document.getElementById("height").value.trim();
+
+      if (weight === "" || height === "" || Number(weight) <= 0 || Number(height) <= 0) {
+        showError("<strong>مدخلات غير صالحة</strong><br>يرجى إدخال وزن وطول أكبر من صفر.");
+        return;
+      }
+
+      const url = `${API_BASE}/calculate_bmi?weight=${encodeURIComponent(weight)}&height=${encodeURIComponent(height)}`;
+
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "جارٍ الحساب...";
+
+      try {
+        const response = await fetch(url, { method: "GET" });
+
+        if (!response.ok) {
+          let detail = `HTTP ${response.status}`;
+          try {
+            const errData = await response.json();
+            if (errData && errData.detail !== undefined) {
+              detail += " — " + (typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail));
+            }
+          } catch (_) {}
+          throw new Error(detail);
+        }
+
+        const data = await response.json();
+
+        if (typeof data.bmi !== "number") {
+          throw new Error("الاستجابة لا تحتوي على قيمة BMI رقمية.");
+        }
+
+        showResult(data.bmi, data.message, weight, height);
+      } catch (err) {
+        showError(
+          `<strong>تعذر جلب النتيجة</strong><br>${err.message}<br><br>` +
+          `<small>تأكد من تشغيل الخادم على <code>${API_BASE}</code> وأن المسار <code>/calculate_bmi</code> يعمل بشكل صحيح. ` +
+          `يمكنك اختبار الرابط مباشرة:<br><code>${API_BASE}/calculate_bmi?weight=85&amp;height=1.75</code></small>`
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  </script>
+</body>
+</html>
